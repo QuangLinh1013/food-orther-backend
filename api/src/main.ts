@@ -10,10 +10,11 @@ config();
 (async () => {
   await sequelize.authenticate();
   console.log('Connection has been established successfully.');
-
+  await sequelize.sync({ alter: true });
+  console.log('✅ Đã đồng bộ các bảng (Database Synced)!');
   const app = express();
   app.use(express.json());
-  app.use('/v1', setupCategoryModule());
+  app.use('/v1', setupCategoryModule(sequelize));
   const port = process.env.PORT ?? 3000;
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);

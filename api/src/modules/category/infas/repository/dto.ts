@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { DataTypes, Model, Sequelize } from 'sequelize';
+import { CategoryStatus } from '../../model/model';
 
 export class CategoryPersistence extends Model {
   declare id: string;
+  declare status: CategoryStatus;
 }
 
 export const modelName = 'Category';
@@ -42,8 +44,8 @@ export function init(sequelize: Sequelize) {
       sequelize,
       modelName: modelName,
       timestamps: true,
-      createdAt: 'created_at',
-      updatedAt: 'updated_at',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
       tableName: 'categories',
     },
   );
