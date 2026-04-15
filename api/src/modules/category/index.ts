@@ -1,19 +1,24 @@
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Router } from 'express';
-import { getCategoryApi } from './infas/get-api';
-import { listCategoryApi } from './infas/list-api';
-import { CreateCategoryApi } from './infas/create-api';
-import { updateCategoryApi } from './infas/update-api';
-import { deleteCategoryApi } from './infas/deleate-api';
-import { init } from './infas/repository/dto';
+import { init, modelName } from './infas/repository/dto';
 import { Sequelize } from 'sequelize';
+import { MySQLCategoryRepository } from './infas/repository/repo';
+import { CategoryUseCase } from './usecase';
+import { CategoryHttpService } from './infas/transport/http-sevice';
 
-export const setupCategoryModule = (sequelize: Sequelize) => {
+export const setupCategoryHexagon = (sequelize: Sequelize) => {
   init(sequelize);
+  const repository = new MySQLCategoryRepository(sequelize, modelName);
+  const useCase = new CategoryUseCase(repository);
+  const httpService = new CategoryHttpService(useCase);
   const router = Router();
-  router.get('/category', listCategoryApi);
-  router.get('/category/:id', getCategoryApi);
-  router.post('/category', CreateCategoryApi);
-  router.patch('/category/:id', updateCategoryApi());
-  router.delete('/category/:id', deleteCategoryApi());
+
+  router.get('/categories', httpService.listCategoryAPI.bind(httpService));
+  router.get('/categories/:id', httpService.getDetailCategoryAPI.bind(httpService));
+  router.post('/categories', httpService.createANewCategoryAPI.bind(httpService));
+  router.patch('/categories/:id', httpService.updateCategoryAPI.bind(httpService));
+  router.delete('/categories/:id', httpService.deleteCategoryAPI.bind(httpService));
+
   return router;
 };
