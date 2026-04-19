@@ -5,6 +5,7 @@ import 'dotenv/config';
 import { setupCategoryHexagon } from './modules/category';
 import express from 'express';
 import { sequelize } from './share/conponent/sequelize';
+import { setupBrandHexagon } from './modules/bran';
 config();
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
@@ -16,6 +17,7 @@ config();
   const app = express();
   app.use(express.json());
   app.use('/v1', setupCategoryHexagon(sequelize));
+  app.use('/v1', setupBrandHexagon(sequelize));
   const port = process.env.PORT ?? 3000;
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
