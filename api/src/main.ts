@@ -6,6 +6,7 @@ import { setupCategoryHexagon } from './modules/category';
 import express from 'express';
 import { sequelize } from './share/conponent/sequelize';
 import { setupBrandHexagon } from './modules/bran';
+import { setupUserHexagon } from './modules/users';
 config();
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
@@ -18,6 +19,7 @@ config();
   app.use(express.json());
   app.use('/v1', setupCategoryHexagon(sequelize));
   app.use('/v1', setupBrandHexagon(sequelize));
+  app.use('/v1', setupUserHexagon(sequelize));
   const port = process.env.PORT ?? 3000;
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
