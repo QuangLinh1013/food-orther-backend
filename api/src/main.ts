@@ -7,6 +7,8 @@ import express from 'express';
 import { sequelize } from './share/conponent/sequelize';
 import { setupBrandHexagon } from './modules/bran';
 import { setupUserHexagon } from './modules/users';
+import { setupMenuRouter } from './modules/menu';
+import { RedisComponent } from './share/conponent/redis';
 config();
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
@@ -20,7 +22,9 @@ config();
   app.use('/v1', setupCategoryHexagon(sequelize));
   app.use('/v1', setupBrandHexagon(sequelize));
   app.use('/v1', setupUserHexagon(sequelize));
+  app.use('/v1', setupMenuRouter(sequelize));
   const port = process.env.PORT ?? 3000;
+  await RedisComponent.getInstance();
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
   });

@@ -7,11 +7,12 @@ import { MyUserRepository } from './infras/repository/mysql-sequelize';
 import { CreateNewUserCmdHandler } from './usecare/create-new-user';
 import { UserHttpService } from './infras/trandsport';
 import { LoginUserCmdHandler } from './usecare/login-user';
+import { init as initMenuModel } from '../menu/innfras/repository/mysql-sequelize/dto'; // Khởi tạo model Menu để có thể liên kết nếu cần
 
 export const setupUserHexagon = (sequelize: Sequelize) => {
   // 1. Init model Sequelize
   init(sequelize);
-
+  
   // 2. Khởi tạo Repository (Secondary Adapter)
   const repository = new MyUserRepository(sequelize);
   
@@ -23,7 +24,7 @@ export const setupUserHexagon = (sequelize: Sequelize) => {
 
   // 5. Gắn vào Router
   const router = Router();
-
+  initMenuModel(sequelize);
   // Endpoint đăng ký: POST /users/register
   router.post('/users/register', httpService.registerAPI.bind(httpService));
   // Endpoint đăng nhập: POST /users/login

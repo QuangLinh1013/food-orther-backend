@@ -1,4 +1,13 @@
 import { PagingDTO } from '../model/paging';
+
+export interface IQueryHandler<Query, Result> {
+  execute(query: Query): Promise<Result>;
+}
+
+export interface ICommandHandler<Command, Result> {
+  execute(command: Command): Promise<Result>;
+}
+
 export interface IRepository<Entity, Cond, UpdateDTO>
   extends
     IQueryRepository<Entity, Cond>,

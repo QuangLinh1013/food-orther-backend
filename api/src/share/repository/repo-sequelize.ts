@@ -15,8 +15,8 @@ export abstract class BaseRepositorySequelize<
   UpdateDTO,
 > implements IRepository<Entity, Cond, UpdateDTO> {
   constructor(
-    private readonly sequelize: Sequelize,
-    private readonly modelName: string,
+    protected readonly sequelize: Sequelize,
+    protected readonly modelName: string,
   ) {}
 
   async get(id: string): Promise<Entity | null> {
