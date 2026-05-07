@@ -2,6 +2,7 @@ import { Menu, MenuCondDTO, MenuUpdateDTO } from '../model/menu';
 
 // Interface Repository chuyên dành cho Menu
 export interface IMenuRepository {
+  getById(productId: string): Promise<Menu | null>;
   get(id: string): Promise<Menu | null>;
   findByCond(cond: MenuCondDTO): Promise<Menu | null>;
 

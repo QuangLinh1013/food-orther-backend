@@ -13,6 +13,13 @@ export class MyMenuRepository
   constructor(sequelize: Sequelize) {
     super(sequelize, ModelName);
   }
+  async getById(productId: string): Promise<Menu | null> {
+    const menu = await this.sequelize.models[ModelName].findOne({
+      where: { id: productId },
+    });
+    if (!menu) return null;
+    return menu.get({ plain: true }) as Menu;
+  }
 
   // Bổ sung hàm lấy danh sách (vì Base Repo thường chỉ có tìm 1 record)
   async list(cond: MenuCondDTO): Promise<Menu[]> {
