@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable prettier/prettier */
 import { Sequelize } from 'sequelize';
 import { BaseRepositorySequelize } from '../../../../../share/repository/repo-sequelize';
 import { IMenuRepository } from '../../../interface';

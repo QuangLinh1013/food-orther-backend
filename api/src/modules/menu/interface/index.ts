@@ -10,7 +10,7 @@ export interface IMenuRepository {
 
   insert(data: Menu): Promise<boolean>;
   update(id: string, data: MenuUpdateDTO): Promise<boolean>;
-  delete(id: string): Promise<boolean>;
+  delete(id: string, isHard?: boolean): Promise<boolean>;
 }
 
 // (Lưu ý: Các interface ICommandHandler, IQueryHandler bạn có thể import từ file dùng chung giống như bên module User nhé)
