@@ -1,0 +1,70 @@
+
+services:
+  # 1. DATABASE MYSQL
+  mysql:
+    image: mysql:8.0
+    container_name: linhfood_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: demo
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql # Lưu dữ liệu ra ổ cứng ngoài
+    networks:
+      - linhfood_network
+
+  # 2. CACHE & LOCK REDIS
+  redis:
+    image: redis:7-alpine
+    container_name: linhfood_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - linhfood_network
+
+  # 3. MESSAGE QUEUE RABBITMQ
+  rabbitmq:
+    image: rabbitmq:3-management-alpine # Bản management có kèm giao diện UI để xem log
+    container_name: linhfood_rabbitmq
+    ports:
+      - "5673:5672" # Cổng cho code kết nối
+      - "15673:15672" # Cổng cho giao diện web
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - linhfood_network
+
+  # 4. SERVER BACKEND CỦA BẠN (Linhfood API)
+  api:
+    build: . # Ra lệnh cho Docker đọc file Dockerfile để build App
+    container_name: linhfood_api
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=123456
+      - DB_NAME=demo
+      - DB_TYPE=mysql
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - JWT_SECRET=your_jwt_secret_key
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+    networks:
+      - linhfood_network
+
+# Định nghĩa các ổ cứng gắn ngoài để bảo vệ dữ liệu
+volumes:
+  mysql_data:
+  rabbitmq_data:
+
+# Định nghĩa mạng lưới nội bộ
+networks:
+  linhfood_network:
+    driver: bridge

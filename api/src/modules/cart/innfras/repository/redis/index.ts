@@ -53,12 +53,16 @@ export class CartRedisRepository implements ICartRepository {
     return deletedCount > 0;
   }
 
-  async clearCart(userId: string): Promise<boolean> {
+  async clear(userId: string): Promise<boolean> {
     const redis = await RedisComponent.getInstance();
     const key = this.getCartKey(userId);
-
-    // DEL: Đốt luôn cái túi
     await redis.del(key);
     return true;
+  }
+
+  async getByUserId(userId: string): Promise<{ userId: string; items: CartItemDTO[] } | null> {
+    const items = await this.getCart(userId);
+    if (!items || items.length === 0) return null;
+    return { userId, items };
   }
 }

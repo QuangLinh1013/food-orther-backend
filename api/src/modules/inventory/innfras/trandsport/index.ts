@@ -4,10 +4,14 @@
 /* eslint-disable prettier/prettier */
 import { Request, Response } from 'express';
 import { DeductInventoryUseCase } from '../../usecare/deduct-inventory';
+import { RollbackInventoryUseCase } from '../../usecare/rollback-inventory';
+import { RestockInventoryUseCase } from '../../usecare/restock-inventory';
 
 export class InventoryHttpService {
   constructor(
     private readonly deductInventoryUseCase: DeductInventoryUseCase,
+    private readonly restockUseCase: RestockInventoryUseCase,
+    private readonly rollbackUseCase: RollbackInventoryUseCase,
   ) {}
 
   async deductAPI(req: Request, res: Response) {
@@ -24,6 +28,24 @@ export class InventoryHttpService {
       res
         .status(statusCode)
         .json({ message: 'Lỗi xử lý tồn kho', error: error.message });
+    }
+  }
+  async restockAPI(req: Request, res: Response) {
+    try {
+      await this.restockUseCase.execute(req.body);
+      res.status(200).json({ message: 'Nhập kho thành công!' });
+    } catch (error: any) {
+      res.status(400).json({ message: 'Lỗi nhập kho', error: error.message });
+    }
+  }
+
+  // API Hoàn kho (MỚI)
+  async rollbackAPI(req: Request, res: Response) {
+    try {
+      await this.rollbackUseCase.execute(req.body);
+      res.status(200).json({ message: 'Hoàn kho thành công!' });
+    } catch (error: any) {
+      res.status(400).json({ message: 'Lỗi hoàn kho', error: error.message });
     }
   }
 }

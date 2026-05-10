@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { OrderDTO, OrderItemDTO } from '../model/order';
+import { OrderDTO, OrderItemDTO, PaginatedOrderResult } from '../model/order';
 
 export interface IOrderRepository {
   // Lưu đơn hàng tổng và danh sách món ăn cùng một lúc
@@ -9,4 +9,7 @@ export interface IOrderRepository {
   // Lấy chi tiết đơn hàng (nếu cần)
   getById(orderId: string): Promise<OrderDTO | null>;
   deduct(menuId: string, quantityToDeduct: number, t?: any): Promise<boolean>;
+  updateStatus(orderId: string, status: 'pending' | 'paid' | 'cancelled' | 'completed', t?: any): Promise<boolean>;
+  getHistory(userId: string, page: number, limit: number): Promise<PaginatedOrderResult>;
+
 }

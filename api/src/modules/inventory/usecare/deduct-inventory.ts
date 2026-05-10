@@ -24,11 +24,10 @@ export class DeductInventoryUseCase implements ICommandHandler<
       throw new Error('Số lượng tồn kho không đủ để đáp ứng đơn hàng này.');
     }
 
-    // 3. Ra lệnh trừ kho, gửi kèm version mà mình vừa nhìn thấy
+    // 3. Ra lệnh trừ kho
     const isSuccess = await this.repository.deduct(
       validData.menuId,
       validData.quantity,
-      inventory.version, // <--- Chìa khóa chống bán lố nằm ở đây
     );
 
     // 4. Nếu MySQL trả về false (nghĩa là có thằng khác đã đổi version trước mình 1 mili-giây)

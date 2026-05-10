@@ -1,7 +1,8 @@
 /* eslint-disable prettier/prettier */
-import { CartItemDTO } from '../model/cart';
+import { CartItemDTO, CartDTO } from '../model/cart';
 
 export interface ICartRepository {
+  getByUserId(userId: string): Promise<CartDTO | null>;
   // Thêm món vào giỏ (Nếu có rồi thì cộng dồn số lượng)
   addItem(
     userId: string,
@@ -16,5 +17,5 @@ export interface ICartRepository {
   removeItem(userId: string, productId: string): Promise<boolean>;
 
   // Xóa sạch giỏ hàng (Dùng khi thanh toán xong)
-  clearCart(userId: string): Promise<boolean>;
+  clear(userId: string): Promise<boolean>;
 }

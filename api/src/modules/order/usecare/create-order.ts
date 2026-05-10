@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable prettier/prettier */
 import { v4 as uuidv4 } from 'uuid';
 import { ICommandHandler } from '../../../share/interface';
@@ -10,8 +7,12 @@ import { IInventoryRepository } from '../../inventory/interface';
 import { IMenuRepository } from '../../menu/interface';
 import { Sequelize } from 'sequelize';
 import { OrderDTO, OrderItemDTO } from '../model/order';
-
-export class CreateOrderUseCase implements ICommandHandler<string, string> {
+export interface CreateOrderDTO {
+  userId: string;
+  // items có thể đến từ giỏ hàng (productId) hoặc từ client (menuId)
+  items: Array<{ menuId?: string; productId?: string; quantity: number }>;
+}
+export class CreateOrderUseCase implements ICommandHandler<CreateOrderDTO, string> {
   constructor(
     private readonly orderRepo: IOrderRepository,
     private readonly cartRepo: ICartRepository,
@@ -20,26 +21,30 @@ export class CreateOrderUseCase implements ICommandHandler<string, string> {
     private readonly sequelize: Sequelize, // Đũa thần Transaction
   ) {}
 
-  async execute(userId: string): Promise<string> {
+  async execute(data: CreateOrderDTO): Promise<string> {
     // 1. Kéo giỏ hàng từ Redis lên
-    const cartItems = await this.cartRepo.getCart(userId);
-    if (!cartItems || cartItems.length === 0) {
-      throw new Error('Giỏ hàng của bạn đang trống!');
-    }
+    // const cartItems = await this.cartRepo.getCart(userId);
+    // if (!cartItems || cartItems.length === 0) {
+    //   throw new Error('Giỏ hàng của bạn đang trống!');
+    // }
 
     // 2. Kích hoạt đũa thần (Bắt đầu Transaction)
     const t = await this.sequelize.transaction();
-
+    const itemsToProcess = data.items;
     try {
       const orderId = uuidv4();
       let totalAmount = 0;
       const orderItemsToSave: OrderItemDTO[] = [];
 
       // 3. Duyệt qua từng món trong giỏ hàng
-      for (const item of cartItems) {
+      for (const item of itemsToProcess) {
+        const menuId = item.menuId ?? item.productId;
+        if (!menuId) {
+          throw new Error('Thiếu menuId/productId trong danh sách items của đơn hàng.');
+        }
         // 3.1. TRỪ KHO (Gắn đũa thần 't' vào)
         const isDeducted = await this.inventoryRepo.deduct(
-          item.productId,
+          menuId,
           item.quantity,
           t,
         );
@@ -50,7 +55,7 @@ export class CreateOrderUseCase implements ICommandHandler<string, string> {
         }
 
         // 3.2. LẤY GIÁ BÁN HIỆN TẠI (Đề phòng giá menu mới bị đổi)
-        const menu = await this.menuRepo.getById(item.productId);
+        const menu = await this.menuRepo.getById(menuId);
         if (!menu) {
           throw new Error('Món ăn không còn tồn tại trên hệ thống!');
         }
@@ -62,7 +67,7 @@ export class CreateOrderUseCase implements ICommandHandler<string, string> {
         orderItemsToSave.push({
           id: uuidv4(),
           orderId: orderId,
-          menuId: item.productId,
+          menuId: menuId,
           quantity: item.quantity,
           price: price,
         });
@@ -70,7 +75,7 @@ export class CreateOrderUseCase implements ICommandHandler<string, string> {
 
       const newOrder: OrderDTO = {
         id: orderId,
-        userId: userId,
+        userId: data.userId,
         totalAmount: totalAmount,
         status: 'pending',
       };
@@ -82,7 +87,7 @@ export class CreateOrderUseCase implements ICommandHandler<string, string> {
       await t.commit();
 
       // 6. XÓA SẠCH GIỎ HÀNG BẰNG REDIS (Vì đã mua xong rồi)
-      await this.cartRepo.clearCart(userId);
+      //await this.cartRepo.clear(userId);
 
       return orderId;
     } catch (error) {
