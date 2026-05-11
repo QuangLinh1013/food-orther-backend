@@ -1,5 +1,5 @@
 # Sử dụng môi trường Node.js 18 bản nhẹ (alpine)
-FROM node:20
+FROM node:18-alpine
 
 # Cài đặt công cụ cần thiết để build (nếu có các thư viện C++)
 RUN apk add --no-cache python3 make g++
@@ -11,8 +11,8 @@ WORKDIR /app
 # Copy package.json và package-lock.json vào trước để tận dụng cache
 COPY package.json package-lock.json ./
 
-# Cài đặt thư viện
-RUN npm install
+# Cài đặt thư viện, ghi log nếu lỗi
+RUN npm install || (cat npm-debug.log || true; exit 1)
 
 # Copy toàn bộ source code vào
 COPY . .
