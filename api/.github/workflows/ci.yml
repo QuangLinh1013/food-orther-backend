@@ -26,7 +26,3 @@ jobs:
         context: ./api
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/linhfood-api:latest
-    - name: 4. Nếu build lỗi, in log npm
-      if: failure()
-      run: |
-        if [ -f api/npm-debug.log ]; then cat api/npm-debug.log; fi

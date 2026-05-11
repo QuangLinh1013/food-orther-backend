@@ -11,8 +11,8 @@ WORKDIR /app
 # Copy package.json và package-lock.json vào trước để tận dụng cache
 COPY package.json package-lock.json ./
 
-# Cài đặt thư viện, ghi log nếu lỗi
-RUN npm install || (cat npm-debug.log || true; exit 1)
+# Cài đặt thư viện
+RUN npm install --legacy-peer-deps --loglevel=warn
 
 # Copy toàn bộ source code vào
 COPY . .
@@ -24,4 +24,4 @@ RUN npm run build
 EXPOSE 3000
 
 # Lệnh khởi chạy server (sử dụng file js đã build trong thư mục dist)
-CMD ["npm", "start"]
+CMD ["npm", "run", "start:prod"]
