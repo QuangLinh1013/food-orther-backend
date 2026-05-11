@@ -1,5 +1,5 @@
 # Sử dụng môi trường Node.js 18 bản nhẹ (alpine)
-FROM node:18-alpine
+FROM node:20
 
 # Cài đặt công cụ cần thiết để build (nếu có các thư viện C++)
 RUN apk add --no-cache python3 make g++
