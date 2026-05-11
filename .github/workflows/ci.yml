@@ -24,6 +24,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: .
+        file: ./api/Dockerfile
         push: true
         # Thay 'linhfood-api' thành tên bạn muốn. Nó sẽ tự động gắn tên user của bạn ở đầu.
         tags: ${{ secrets.DOCKER_USERNAME }}/linhfood-api:latest
