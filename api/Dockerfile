@@ -7,8 +7,9 @@ RUN apk add --no-cache python3 make g++
 # Tạo thư mục làm việc trong container
 WORKDIR /app
 
-# Copy package.json vào trước để tận dụng cache
-COPY package*.json ./
+
+# Copy package.json và package-lock.json vào trước để tận dụng cache
+COPY package.json package-lock.json ./
 
 # Cài đặt thư viện
 RUN npm install

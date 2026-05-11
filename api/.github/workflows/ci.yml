@@ -23,7 +23,10 @@ jobs:
     - name: 3. Đóng gói API thành Docker Image và đẩy lên bãi đỗ
       uses: docker/build-push-action@v4
       with:
-        context: .
+        context: ./api
         push: true
-        # Thay 'linhfood-api' thành tên bạn muốn. Nó sẽ tự động gắn tên user của bạn ở đầu.
         tags: ${{ secrets.DOCKER_USERNAME }}/linhfood-api:latest
+    - name: 4. Nếu build lỗi, in log npm
+      if: failure()
+      run: |
+        if [ -f api/npm-debug.log ]; then cat api/npm-debug.log; fi
