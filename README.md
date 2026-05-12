@@ -1,143 +1,263 @@
-# Hexagon Food Order Backend
+# Food Order Backend (Hexagonal Microservice)
 
-Backend cho hệ thống **đặt đồ ăn** theo kiến trúc **Hexagonal (Ports & Adapters)**: tách nghiệp vụ khỏi framework/DB/cache để dễ test, dễ thay adapter (HTTP/DB/Redis) mà không ảnh hưởng domain.
+Backend for a **high-load food ordering system** following **Hexagonal Architecture (Ports & Adapters)**. The core business logic is fully decoupled from frameworks, DB, cache, and message brokers, making it easy to test and swap adapters (HTTP/DB/Redis/RabbitMQ) without affecting the domain.
 
-## Mục lục
+## Table of Contents
 
-- [Tổng quan](#tổng-quan)
-- [Kiến trúc Hexagonal (Ports & Adapters)](#kiến-trúc-hexagonal-ports--adapters)
-- [Công nghệ](#công-nghệ)
-- [Yêu cầu](#yêu-cầu)
-- [Cài đặt & chạy dự án](#cài-đặt--chạy-dự-án)
-- [Biến môi trường (.env)](#biến-môi-trường-env)
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Hexagonal Architecture](#hexagonal-architecture)
+- [Tech Stack](#tech-stack)
+- [Requirements](#requirements)
+- [Local Setup](#local-setup)
+- [Docker Setup](#docker-setup)
+- [Environment Variables](#environment-variables)
 - [Scripts](#scripts)
-- [Các module chính](#các-module-chính)
-- [Một số endpoint](#một-số-endpoint)
-- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
-- [Đóng góp](#đóng-góp)
+- [Main Modules](#main-modules)
+- [Sample Endpoints](#sample-endpoints)
+- [Folder Structure](#folder-structure)
+- [CI/CD & DevOps](#cicd--devops)
+- [Contributing](#contributing)
 - [License](#license)
 
-## Tổng quan
+## Overview
 
 - **Base URL**: `http://localhost:3000`
 - **API prefix**: `/v1`
 - **Database**: MySQL (Sequelize)
-- **Cache**: Redis (Cart)
+- **Cache & Distributed Lock**: Redis
+- **Message Broker**: RabbitMQ
+- **Real-time**: Socket.io
 
-## Kiến trúc Hexagonal (Ports & Adapters)
+## Key Features
 
-Mục tiêu: nghiệp vụ “sống” ở trung tâm, còn framework/DB/cache chỉ là adapter thay thế được.
+- **Absolute Overselling Protection:** Uses **Redis Distributed Lock** to lock inventory when deducting stock, ensuring no two users can buy the last item at the same time.
+- **Async Processing:** **RabbitMQ** as Message Broker offloads heavy tasks (e.g., order DB writes) to background workers, making APIs instantly responsive.
+- **Real-time Notification:** **Socket.io** pushes real-time order status updates to clients.
+- **Fully Containerized:** The entire system (API, Worker, MySQL, Redis, RabbitMQ) is cleanly containerized with Docker.
+
+## Hexagonal Architecture
+
+Goal: Business logic "lives" at the center, while frameworks/DB/cache/queue are just replaceable adapters.
+
+- **Domain / Use case**: Core business logic (create order, add to cart, deduct inventory, etc.)
+- **Ports**: Interfaces for domain input/output (repo, service, message publisher)
+- **Adapters**: Implementations of ports (HTTP controller/router, Sequelize repo, Redis repo, RabbitMQ publisher, etc.)
+- **Infrastructure / Components**: Setup for DB, Redis, RabbitMQ, config, and wiring
+
+## Tech Stack
+
+- **Node.js + TypeScript**
+- **Express** (HTTP)
+- **Sequelize** + **mysql2**
+- **Redis** (Caching & Locking)
+- **RabbitMQ** (Message Queue)
+- **Socket.io** (WebSockets)
+- **JWT** (Auth) & **Zod** (Validation)
+- Tooling: **ESLint**, **Prettier**, **Jest**, **Nodemon**
+- DevOps: **Docker**, **Docker Compose**, **GitHub Actions**
+
+## Requirements
+
+- Node.js (recommended **>= 18**)
+- MySQL
+- Redis
+- RabbitMQ
+- Docker & Docker Compose (for containerized setup)
+
+## Local Setup
+
+```bash
+# Install dependencies
+cd api
+npm install
+
+# Start development server
+npm run start:dev
+```
+
+## Docker Setup
+
+The fastest way to spin up the entire ecosystem without installing databases locally.
+
+```bash
+# Make sure you are in the project root (where docker-compose.yml is located)
+docker-compose up -d --build
+```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and adjust values as needed:
+
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=foodorder
+DB_PASS=yourpassword
+REDIS_URL=redis://localhost:6379
+RABBITMQ_URL=amqp://localhost
+JWT_SECRET=your_jwt_secret
+```
+
+## Scripts
+
+```bash
+# Lint code
+npm run lint
+
+# Run tests
+npm run test
+
+# Build for production
+npm run build
+```
+
+## Main Modules
+
+- **Brand**: Manage brands
+- **Cart**: Shopping cart operations
+- **Category**: Food categories
+- **Inventory**: Stock management, distributed lock
+- **Menu**: Menu items
+- **Order**: Order creation, history, async processing
+- **Users**: User management & authentication
+
+## Sample Endpoints
+
+```http
+# Create new order
+POST /v1/order
+
+# Add item to cart
+POST /v1/cart/add
+
+# Get menu list
+GET /v1/menu
+```
+
+
+## Folder Structure
+
+```text
+api/
+	src/
+		modules/
+			brand/
+				interface/         # TypeScript interfaces for brand domain
+				model/             # Brand models, DTOs, error definitions
+				usecase/           # Business logic (create, update, delete, etc.)
+				innfras/           # Infrastructure (repository, transport)
+				index.ts           # Module entry point
+			cart/
+				interface/
+				model/
+				usecase/
+				innfras/
+				index.ts
+			category/
+				interface/
+				model/
+				usecase/
+				infas/             # Infrastructure (repository, rpc, transport)
+				index.ts
+			inventory/
+				interface/
+				model/
+				usecase/
+				innfras/
+				index.ts
+			menu/
+				interface/
+				model/
+				usecase/
+				innfras/
+				index.ts
+			order/
+				interface/
+				model/
+				usecase/
+				innfras/
+				workers/           # Background workers (e.g., order processing)
+				index.ts
+			users/
+				interface/
+				model/
+				usecase/
+				infras/
+				index.ts
+		share/
+			component/
+				sequelize.ts       # Sequelize setup
+				redis/             # Redis connection/config
+			infrastructure/
+				rabbitmq/          # RabbitMQ setup
+				socket/            # Socket.io setup
+			interface/
+				index.ts           # Shared interfaces
+				message-queue.ts   # Message queue interfaces
+			model/
+				base-error.ts      # Base error class
+				base-model.ts      # Base model class
+				paging.ts          # Pagination utilities
+			repository/
+				repo-sequelize.ts  # Shared Sequelize repository logic
+			utils/
+				encryption.ts      # Encryption utilities
+		test/
+			app.e2e-spec.ts      # End-to-end tests
+			jest-e2e.json        # Jest config for e2e
+	docker-compose.yml       # Docker Compose orchestration
+	Dockerfile               # API Dockerfile
+	package.json             # Project dependencies and scripts
+	tsconfig.json            # TypeScript config
+	...
+```
+
+## CI/CD & DevOps
+
+- **Docker**: All services containerized for local/dev/prod
+- **Docker Compose**: Orchestrates API, DB, Redis, RabbitMQ
+- **GitHub Actions**: Automated lint, test, build, deploy
+
+## Contributing
+
+Pull requests are welcome! Please open issues for bugs or feature requests.
+
+## License
+
+MIT
+
+Mục tiêu: nghiệp vụ “sống” ở trung tâm, còn framework/DB/cache/queue chỉ là adapter thay thế được.
 
 - **Domain / Use case**: nghiệp vụ cốt lõi (create order, add to cart, deduct inventory…)
-- **Ports**: interface “cổng” vào/ra của domain (repo, service)
-- **Adapters**: hiện thực ports (HTTP controller/router, Sequelize repo, Redis repo…)
-- **Infrastructure / Components**: setup kết nối DB, Redis, config, wiring
+- **Ports**: interface “cổng” vào/ra của domain (repo, service, message publisher)
+- **Adapters**: hiện thực ports (HTTP controller/router, Sequelize repo, Redis repo, RabbitMQ publisher…)
+- **Infrastructure / Components**: setup kết nối DB, Redis, RabbitMQ, config, wiring
 
 ## Công nghệ
 
 - **Node.js + TypeScript**
 - **Express** (HTTP)
 - **Sequelize** + **mysql2**
-- **Redis**
-- **JWT** (Auth)
-- **Zod** (Validate)
+- **Redis** (Caching & Locking)
+- **RabbitMQ** (Message Queue)
+- **Socket.io** (WebSockets)
+- **JWT** (Auth) & **Zod** (Validate)
 - Tooling: **ESLint**, **Prettier**, **Jest**, **Nodemon**
+- DevOps: **Docker**, **Docker Compose**, **GitHub Actions**
 
 ## Yêu cầu
 
 - Node.js (khuyến nghị **>= 18**)
 - MySQL
 - Redis
+- RabbitMQ
+- Docker & Docker Compose (Nếu muốn chạy container)
 
-## Cài đặt & chạy dự án
+## Cài đặt & chạy bằng Docker
 
-Chạy trong thư mục `api/`:
-
-```bash
-cd api
-npm install
-```
-
-Tạo file `.env` (xem mục bên dưới), sau đó chạy dev:
+Cách nhanh nhất để dựng toàn bộ hệ sinh thái mà không cần cài đặt các Database rườm rà lên máy thật.
 
 ```bash
-npm run start:dev
-```
-
-Mặc định server chạy:
-
-- `http://localhost:3000`
-
-> Lưu ý: dự án hiện đang `sequelize.sync({ alter: true })` khi khởi động. Ở môi trường production nên thay bằng migration để tránh thay đổi schema ngoài ý muốn.
-
-## Biến môi trường (.env)
-
-Tạo `api/.env` với các biến tối thiểu sau:
-
-```env
-PORT=3000
-
-DB_TYPE=mysql
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=food_order
-DB_USERNAME=root
-DB_PASSWORD=your_password
-```
-
-Nếu bạn dùng Redis host riêng, khuyến nghị cấu hình qua biến môi trường (ví dụ `REDIS_URL`) và **không commit secrets** lên git.
-
-## Scripts
-
-Chạy trong `api/`:
-
-```bash
-npm run start:dev    # chạy dev (nodemon + ts-node)
-npm run build        # build typescript -> dist
-npm run start:prod   # chạy production từ dist
-npm run lint         # eslint --fix
-npm run format       # prettier
-npm test             # unit tests
-```
-
-## Các module chính
-
-- **Category**: quản lý danh mục món ăn (CRUD)
-- **Brand**: quản lý thương hiệu (CRUD)
-- **User**: đăng ký / đăng nhập
-- **Menu**: quản lý thực đơn (CRUD)
-- **Cart**: giỏ hàng (Redis)
-- **Inventory**: tồn kho, trừ kho khi đặt hàng
-- **Order**: tạo đơn, xử lý luồng đặt hàng
-
-## Một số endpoint
-
-Prefix: `/v1`
-
-- `GET /categories` — danh sách danh mục
-- `POST /brands` — tạo thương hiệu
-- `POST /users/register` — đăng ký
-- `POST /users/login` — đăng nhập
-- `GET /menus` — danh sách menu
-- `POST /cart` — thêm vào giỏ hàng
-- `POST /inventory/deduct` — trừ tồn kho
-- `POST /order` — tạo đơn hàng
-
-## Cấu trúc thư mục
-
-```text
-api/
-  src/
-    modules/            # các bounded-context / module nghiệp vụ
-    share/              # component dùng chung (db/redis/config/...)
-  test/                 # tests
-```
-
-## Đóng góp
-
-- Chạy `npm run lint` và `npm run format` trước khi commit.
-- Không commit `.env`, credentials, hoặc dữ liệu nhạy cảm.
-
-## License
-
-UNLICENSED
+# Đảm bảo bạn đang ở thư mục gốc của dự án (nơi có file docker-compose.yml)
+docker-compose up -d --build
